@@ -1,6 +1,11 @@
+import 'dart:convert';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:homebinder/model/user_model.dart';
 import 'package:homebinder/screens/register.dart';
 import 'package:homebinder/utils/constants.dart';
+import 'package:sn_progress_dialog/progress_dialog.dart';
 
 import '../navigator/bottom_navbar.dart';
 
@@ -14,7 +19,9 @@ class Login extends StatefulWidget {
 
 class _LoginState extends State<Login> {
   bool _isObscure = true;
-
+  final _formKey = GlobalKey<FormState>();
+  var _emailController=TextEditingController();
+  var _passwordController=TextEditingController();
   @override
   Widget build(BuildContext context) {
 
@@ -35,96 +42,142 @@ class _LoginState extends State<Login> {
         ),
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Main Container of Screen
-            Container(
-              decoration: BoxDecoration(),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 80,),
-                    TextField(
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15)
-                        ),
-                        hintText: 'Email',
-                        hintStyle: TextStyle(color: colorText),
-                        fillColor: colorFill,
-                        filled: true,
+        child: Form(
+          key: _formKey,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 80,),
+                TextFormField(
+                  controller: _emailController,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter some text';
+                    }
+                    return null;
+                  },
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15)
+                    ),
+                    hintText: 'Email',
+                    hintStyle: TextStyle(color: colorText),
+                    fillColor: colorFill,
+                    filled: true,
 
-                      ),
-                    ),
-                    const SizedBox(height: 10,),
-                    TextField(
-                      obscureText: _isObscure,
-                      decoration: InputDecoration(
-                        border:  OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15)
-                        ),
-                        hintText: 'Password',
-                        hintStyle: TextStyle(color: colorText),
-                        fillColor: colorFill,
-                        filled: true,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _isObscure ? Icons.visibility : Icons.visibility_off,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _isObscure = !_isObscure;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 30,),
-                    Center(
-                      child: InkWell(
-                        onTap: (){
-                          Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) =>  BottomNavBar()));
-                        },
-                        child: Container(
-                          height: 40,
-                          width: width*0.8,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            color: secondaryColor
-                          ),
-                          alignment: Alignment.center,
-                          child: const Text("LOG IN",style: TextStyle(fontSize:16,color: colorWhite, fontWeight: FontWeight.w600),),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 30,),
-                    Center(
-                        child:InkWell(
-                            onTap: (){
-                              //Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => const AuthInfo()));
-                            },
-                            child: const Text("Forgot your password?", style: TextStyle( color: colorText, fontSize: 16, fontWeight: FontWeight.w600),)
-                        )
-                    ),
-                    SizedBox(height: 20,),
-                    Center(
-                        child:InkWell(
-                            onTap: (){
-                              Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => const Register()));
-                            },
-                            child: const Text("Don't have an account? SIGN UP", style: TextStyle( color: colorText, fontSize: 16, fontWeight: FontWeight.w500),)
-                        )
-                    ),
-
-
-                  ],
+                  ),
                 ),
-              ),
 
+                const SizedBox(height: 10,),
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: _isObscure,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter some text';
+                    }
+                    return null;
+                  },
+                  decoration: InputDecoration(
+                    border:  OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15)
+                    ),
+                    hintText: 'Password',
+                    hintStyle: TextStyle(color: colorText),
+                    fillColor: colorFill,
+                    filled: true,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isObscure ? Icons.visibility : Icons.visibility_off,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isObscure = !_isObscure;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 30,),
+                Center(
+                  child: InkWell(
+                    onTap: ()async{
+                      if (_formKey.currentState!.validate()) {
+                        final ProgressDialog pr = ProgressDialog(context: context);
+                        pr.show(max: 100, msg: 'Logging In');
+                        var dio = Dio();
+                        await dio.post(
+                            '$apiUrl/sessions',
+                            data: {
+                              'email': _emailController.text.trim(),
+                              'password': _passwordController.text,
+
+                            }
+                        ).then((response){
+                          pr.close();
+                          print(response.data);
+                          UserModel model=UserModel.fromJson(response.data);
+                          print("user model ${model.authenticationToken}");
+                          Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) =>  BottomNavBar()));
+                        }).onError((error, stackTrace){
+                          pr.close();
+                          print("http error : ${error.toString()}");
+                          showDialog<String>(
+                            context: context,
+                            builder: (BuildContext context) => AlertDialog(
+                              content:  Text('Http Error : User not found', textAlign: TextAlign.center,),
+                              actions: <Widget>[
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, 'OK'),
+                                  child: const Text('OK'),
+                                ),
+                              ],
+                            ),
+                          );
+                        });
+
+
+                      }
+                    },
+                    child: Container(
+                      height: 40,
+                      width: width*0.8,
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          color: secondaryColor
+                      ),
+                      alignment: Alignment.center,
+                      child: const Text("LOG IN",style: TextStyle(fontSize:16,color: colorWhite, fontWeight: FontWeight.w600),),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 30,),
+                Center(
+                    child:InkWell(
+                        onTap: (){
+                          //Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => const AuthInfo()));
+                        },
+                        child: const Text("Forgot your password?", style: TextStyle( color: colorText, fontSize: 16, fontWeight: FontWeight.w600),)
+                    )
+                ),
+                SizedBox(height: 20,),
+                Center(
+                    child:InkWell(
+                        onTap: (){
+                          Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => const Register()));
+                        },
+                        child: const Text("Don't have an account? SIGN UP", style: TextStyle( color: colorText, fontSize: 16, fontWeight: FontWeight.w500),)
+                    )
+                ),
+
+
+              ],
             ),
-          ],
+          ),
+
         ),
 
       ),

@@ -9,3 +9,5 @@ const colorWhite=Color(0xffffffff);
 const colorBlack=Color(0xff000000);
 const colorFill=Color(0xffF6F6F6);
 const colorText=Color(0xffBDBDBD);
+
+const apiUrl="https://portal.homebinder.io/api/v1";
