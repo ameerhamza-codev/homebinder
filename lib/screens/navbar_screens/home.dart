@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:homebinder/screens/add_home.dart';
 import 'package:homebinder/screens/home_detail.dart';
 import 'package:homebinder/utils/constants.dart';
+import 'package:provider/provider.dart';
+
+import '../../provider/UserDataProvider.dart';
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
@@ -19,7 +22,7 @@ class _HomeState extends State<Home> {
     double width = MediaQuery.of(context).size.width;
     double height = MediaQuery.of(context).size.height;
 
-
+    final provider = Provider.of<UserDataProvider>(context, listen: false);
 
     return Scaffold(
       resizeToAvoidBottomInset: false,

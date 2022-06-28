@@ -5,9 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:homebinder/model/user_model.dart';
 import 'package:homebinder/screens/register.dart';
 import 'package:homebinder/utils/constants.dart';
+import 'package:homebinder/utils/shared_pref.dart';
+import 'package:provider/provider.dart';
 import 'package:sn_progress_dialog/progress_dialog.dart';
 
 import '../navigator/bottom_navbar.dart';
+import '../provider/UserDataProvider.dart';
+import 'forgot_password.dart';
 
 class Login extends StatefulWidget {
   const Login({Key? key}) : super(key: key);
@@ -105,42 +109,97 @@ class _LoginState extends State<Login> {
                 Center(
                   child: InkWell(
                     onTap: ()async{
-                      if (_formKey.currentState!.validate()) {
+                      if(_formKey.currentState!.validate()){
                         final ProgressDialog pr = ProgressDialog(context: context);
-                        pr.show(max: 100, msg: 'Logging In');
-                        var dio = Dio();
-                        await dio.post(
-                            '$apiUrl/sessions',
-                            data: {
-                              'email': _emailController.text.trim(),
-                              'password': _passwordController.text,
+                        pr.show(max: 100, msg: 'Logging In',barrierDismissible: true);
+                        try {
+                          var dio = Dio();
+                          var response = await dio.post(
+                              '$apiUrl/sessions',
+                              data: {
+                                'email': _emailController.text.trim(),
+                                'password': _passwordController.text,
 
-                            }
-                        ).then((response){
-                          pr.close();
-                          print(response.data);
-                          UserModel model=UserModel.fromJson(response.data);
-                          print("user model ${model.authenticationToken}");
-                          Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) =>  BottomNavBar()));
-                        }).onError((error, stackTrace){
-                          pr.close();
-                          print("http error : ${error.toString()}");
-                          showDialog<String>(
-                            context: context,
-                            builder: (BuildContext context) => AlertDialog(
-                              content:  Text('Http Error : User not found', textAlign: TextAlign.center,),
-                              actions: <Widget>[
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context, 'OK'),
-                                  child: const Text('OK'),
-                                ),
-                              ],
-                            ),
+                              }
                           );
-                        });
+                          if(response.statusCode==201){
+                            pr.close();
+                            UserModel model=UserModel.fromJson(response.data);
+                            print("user model ${model.authenticationToken}");
+                            final provider = Provider.of<UserDataProvider>(context, listen: false);
+                            provider.setUserData(model);
+                            SharedPrefHelper helper=new SharedPrefHelper();
+                            helper.setPrefUserData(jsonEncode(response.data));
+                            Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) =>  BottomNavBar()));
 
+                          }
+                          else{
+                            showDialog<String>(
+                              context: context,
+                              builder: (BuildContext context) => AlertDialog(
+                                content:  Text('Http Error : ${response.statusCode}', textAlign: TextAlign.center,),
+                                actions: <Widget>[
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, 'OK'),
+                                    child: const Text('OK'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
 
+                        } on DioError catch (e) {
+                          pr.close();
+
+                          if (e.response != null) {
+                            print("e.response != null");
+                            print(e.response!.data);
+                            print(e.response!.statusCode);
+                            if(e.response!.statusCode==401){
+                              showDialog<String>(
+                                context: context,
+                                builder: (BuildContext context) => AlertDialog(
+                                  content:  Text('User not found', textAlign: TextAlign.center,),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context, 'OK'),
+                                      child: const Text('OK'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+                            else{
+                              showDialog<String>(
+                                context: context,
+                                builder: (BuildContext context) => AlertDialog(
+                                  content:  Text('Http Error : ${e.response!.statusCode}', textAlign: TextAlign.center,),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context, 'OK'),
+                                      child: const Text('OK'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+                          } else {
+                            showDialog<String>(
+                              context: context,
+                              builder: (BuildContext context) => AlertDialog(
+                                content:  Text('Http Request Error', textAlign: TextAlign.center,),
+                                actions: <Widget>[
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, 'OK'),
+                                    child: const Text('OK'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                        }
                       }
+
                     },
                     child: Container(
                       height: 40,
@@ -158,7 +217,7 @@ class _LoginState extends State<Login> {
                 Center(
                     child:InkWell(
                         onTap: (){
-                          //Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => const AuthInfo()));
+                          Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => ForgotPassword()));
                         },
                         child: const Text("Forgot your password?", style: TextStyle( color: colorText, fontSize: 16, fontWeight: FontWeight.w600),)
                     )
