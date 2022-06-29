@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 
 const primaryColor=Color(0xffA2BCC9);
@@ -11,3 +12,4 @@ const colorFill=Color(0xffF6F6F6);
 const colorText=Color(0xffBDBDBD);
 
 const apiUrl="https://portal.homebinder.io/api/v1";
+final f = new DateFormat('dd-MM-yyyy');

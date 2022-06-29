@@ -148,7 +148,8 @@ class _LoginState extends State<Login> {
                             );
                           }
 
-                        } on DioError catch (e) {
+                        }
+                        on DioError catch (e) {
                           pr.close();
 
                           if (e.response != null) {
@@ -183,7 +184,8 @@ class _LoginState extends State<Login> {
                                 ),
                               );
                             }
-                          } else {
+                          }
+                          else {
                             showDialog<String>(
                               context: context,
                               builder: (BuildContext context) => AlertDialog(
