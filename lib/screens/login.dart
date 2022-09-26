@@ -127,7 +127,9 @@ class _LoginState extends State<Login> {
                             UserModel model=UserModel.fromJson(response.data);
                             print("user model ${model.authenticationToken}");
                             final provider = Provider.of<UserDataProvider>(context, listen: false);
-                            provider.setUserData(model);
+                            UserModel newModel=UserModel(email: _emailController.text.trim(),authenticationToken: model.authenticationToken);
+                            //model.email=_emailController.text.trim();
+                            provider.setUserData(newModel);
                             SharedPrefHelper helper=new SharedPrefHelper();
                             helper.setPrefUserData(jsonEncode(response.data));
                             Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) =>  BottomNavBar()));

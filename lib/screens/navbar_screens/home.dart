@@ -19,7 +19,31 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  Future<List<HomeModel>> getHomes(apiToken,email)async{
+    print("token $apiToken : email $email");
+    List<HomeModel> homes=[];
+    var dio = Dio();
+    var response = await  dio.get('$apiUrl/homes',
+      options: Options(
+        headers: {
+          'Authorization-Email':email,
+          'Authorization':apiToken,
+          'Content-Type':'application/x-www-form-urlencoded; charset=utf-8',
+        },
+      ),
+    );
+    print("res ${response.statusCode} ${response.data} $apiToken");
+    if(response.statusCode==200){
 
+      Iterable l = response.data;
+      homes = List<HomeModel>.from(l.map((model)=> HomeModel.fromJson(model)));
+      //print("user model ${homes}");
+
+    }
+    else print("error ${response.statusCode} : ${response.data}");
+    return homes;
+
+  }
   @override
   Widget build(BuildContext context) {
 
@@ -28,21 +52,7 @@ class _HomeState extends State<Home> {
 
     final provider = Provider.of<UserDataProvider>(context, listen: false);
 
-    Future<List<HomeModel>> getHomes(apiToken)async{
-      List<HomeModel> homes=[];
-      var dio = Dio();
-      var response = await  dio.get('$apiUrl/homes', queryParameters: {'token':apiToken});
-      print("res ${response.statusCode} ${response.data} $apiToken");
-      if(response.statusCode==200){
 
-        Iterable l = response.data;
-        homes = List<HomeModel>.from(l.map((model)=> HomeModel.fromJson(model)));
-        //print("user model ${homes}");
-
-      }
-      return homes;
-
-    }
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -74,7 +84,7 @@ class _HomeState extends State<Home> {
         child: Padding(
           padding: const EdgeInsets.all( 10.0),
           child: FutureBuilder<List<HomeModel>>(
-              future: getHomes(provider.userData!.authenticationToken),
+              future: getHomes(provider.userData!.authenticationToken,provider.userData!.email),
               builder: (context,AsyncSnapshot<List<HomeModel>> snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(
@@ -102,7 +112,8 @@ class _HomeState extends State<Home> {
                         itemBuilder: (BuildContext context,int index){
                           return InkWell(
                             onTap: (){
-                              Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) =>  Details()));
+                              provider.setHomeModel(snapshot.data![index]);
+                              Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) =>  Details(snapshot.data![index])));
                             },
                             child: Container(
                               height: height*0.4,
