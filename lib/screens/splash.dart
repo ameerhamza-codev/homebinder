@@ -30,7 +30,9 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   void navigationPage() async{
-    SharedPrefHelper helper=new SharedPrefHelper();
+    Navigator.pushReplacement(context, MaterialPageRoute(
+        builder: (context) => const Login()));
+   /* SharedPrefHelper helper=new SharedPrefHelper();
     String userData=await helper.getPrefUserData();
     if(userData=="no user"){
       Navigator.pushReplacement(context, MaterialPageRoute(
@@ -43,7 +45,7 @@ class _SplashScreenState extends State<SplashScreen> {
       provider.setUserData(model);
       Navigator.pushReplacement(context, MaterialPageRoute(
           builder: (context) =>  BottomNavBar()));
-    }
+    }*/
     
   }
 

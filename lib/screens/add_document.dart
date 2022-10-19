@@ -24,12 +24,13 @@ class _AddDocumentState extends State<AddDocument> {
   File? file;
   var _nameController=TextEditingController();
   var _categoryController=TextEditingController();
+  var _mediaController=TextEditingController();
 
 
+
+  bool isLoading=false;
   String selectedCategory="";
   List<String> categories=[];
-  bool isLoading=false;
-
   getCategories(apiToken,email)async{
     setState(() {
       isLoading=true;
@@ -111,7 +112,7 @@ class _AddDocumentState extends State<AddDocument> {
     double height = MediaQuery.of(context).size.height;
 
     bool checkedValue = false;
-
+    String ext='';
     final provider = Provider.of<UserDataProvider>(context, listen: false);
 
     return Scaffold(
@@ -184,6 +185,7 @@ class _AddDocumentState extends State<AddDocument> {
                         )
                       else
                         TextFormField(
+                          readOnly: true,
                           controller: _categoryController,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -223,18 +225,27 @@ class _AddDocumentState extends State<AddDocument> {
                       const SizedBox(height: 10,),
                       TextField(
                         onTap: ()async{
+
                           FilePickerResult? result = await FilePicker.platform.pickFiles(
-                            type: FileType.image,
+                            type: FileType.custom,
+                            allowedExtensions: ['jpg', 'pdf', 'doc','png','jpeg'],
                           );
                           //chat.setReply(false);
                           if (result != null) {
+
                             file = File(result.files.single.path!);
+                            ext=result.files.single.extension!;
+                            print("file ext:$ext");
+                            _mediaController.text=result.files.single.name;
+                            print('${file!=null} && (${ext=='pdf' || ext=='doc'})');
+                            print('${file!=null && (ext!='doc' && ext!='pdf')}');
                             setState(() {
 
                             });
                           };
                         },
                         readOnly: true,
+                        controller: _mediaController,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15)
@@ -248,9 +259,17 @@ class _AddDocumentState extends State<AddDocument> {
                           ),
                         ),
                       ),
+
                       const SizedBox(height: 20,),
-                      if(file!=null)
-                        Image.file(file!,height: 200,width: MediaQuery.of(context).size.width,fit: BoxFit.cover,),
+                     /* if(file!=null)
+                        (ext=='pdf' || ext=='doc')?
+                        Center(
+                          child: Text("Document : ${file!.path}"),
+                        ):
+                        Image.file(file!,height: 200,width: MediaQuery.of(context).size.width,fit: BoxFit.cover,),*/
+                      /*if(file!=null && ext=='pdf')
+                      ,
+                      if(file!=null && ext!='pdf')*/
                       const SizedBox(height: 20,),
                       Center(
                         child: InkWell(

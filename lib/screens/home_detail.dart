@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:homebinder/model/document_model.dart';
 import 'package:homebinder/screens/home_documents.dart';
 import 'package:homebinder/screens/home_images.dart';
+import 'package:homebinder/screens/photo_viewer.dart';
 import 'package:homebinder/utils/constants.dart';
+import 'package:homebinder/widgets/custom_appbar.dart';
 import 'package:provider/provider.dart';
 
 import '../model/home_model.dart';
@@ -39,6 +41,7 @@ class _DetailsState extends State<Details> {
 
       Iterable l = response.data;
       homes = List<HomeImageModel>.from(l.map((model)=> HomeImageModel.fromJson(model)));
+      homes.removeWhere((element) => element.homeId!=widget.home.id);
       print("user model ${homes}");
 
     }
@@ -65,6 +68,7 @@ class _DetailsState extends State<Details> {
 
       Iterable l = response.data;
       homes = List<HomeDocumentModel>.from(l.map((model)=> HomeDocumentModel.fromJson(model)));
+      homes.removeWhere((element) => element.homeId!=widget.home.id);
       print("user model ${homes}");
 
     }
@@ -83,7 +87,7 @@ class _DetailsState extends State<Details> {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: colorWhite,
-      appBar: AppBar(
+      /*appBar: AppBar(
           backgroundColor: primaryColor,
           elevation: 0,
           leading: InkWell(
@@ -91,18 +95,18 @@ class _DetailsState extends State<Details> {
                 Navigator.pop(context);
               },
               child: const Padding(
-                padding: EdgeInsets.only(left: 15.0),
+                padding: EdgeInsets.only(left: 10),
                 child: Center(child: Text("Back",style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),)),
               )
           ),
           title:  Text("Home Details", style: TextStyle(color: colorWhite, fontSize: 24, fontWeight: FontWeight.w500),),
           centerTitle: true,
-          actions: <Widget>[
-          ]
-      ),
+
+      ),*/
       body: SafeArea(
         child: ListView(
           children: [
+            CustomAppbar("Home Details"),
             Container(
               height: height*0.3,
               child: Stack(
@@ -143,13 +147,31 @@ class _DetailsState extends State<Details> {
                             flex: 7,
                             child: Padding(
                               padding: const EdgeInsets.only(bottom: 15.0),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: colorBlack),
-                                  borderRadius: BorderRadius.only(bottomLeft: Radius.circular(15), bottomRight: Radius.circular(15)),
-                                  image: const DecorationImage(
-                                    image: AssetImage("assets/images/placeholder-image.jpeg"),
-                                    fit: BoxFit.cover,
+                              child: InkWell(
+                                onTap: (){
+                                  Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) =>  PhotoViewer(widget.home.communityName!,widget.home.imageUrl!)));
+
+                                },
+                                child: widget.home.imageUrl!=""?
+                                Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: colorBlack),
+                                    borderRadius: BorderRadius.only(bottomLeft: Radius.circular(15), bottomRight: Radius.circular(15)),
+                                    image:  DecorationImage(
+                                      image: NetworkImage(widget.home.imageUrl!),
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                )
+                                    :
+                                Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: colorBlack),
+                                    borderRadius: BorderRadius.only(bottomLeft: Radius.circular(15), bottomRight: Radius.circular(15)),
+                                    image: const DecorationImage(
+                                      image: AssetImage("assets/images/placeholder-image.jpeg"),
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -209,34 +231,40 @@ class _DetailsState extends State<Details> {
                                   itemBuilder: (BuildContext context,int index){
                                     return Row(
                                       children: [
-                                        Column(
-                                          children: [
-                                            if(snapshot.data![index].documentUrl=="")
-                                              Container(
-                                                height: 100,
-                                                width: 100,
-                                                decoration: BoxDecoration(
-                                                  borderRadius: BorderRadius.circular(15),
-                                                  image: DecorationImage(
-                                                    image: AssetImage("assets/icons/placeholder-icon.jpg"),
-                                                    fit: BoxFit.cover,
+                                        InkWell(
+                                          onTap: (){
+                                            Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) =>  PhotoViewer(snapshot.data![index].name!,snapshot.data![index].documentUrl!)));
+
+                                          },
+                                          child: Column(
+                                            children: [
+                                              if(snapshot.data![index].documentUrl=="")
+                                                Container(
+                                                  height: 100,
+                                                  width: 100,
+                                                  decoration: BoxDecoration(
+                                                    borderRadius: BorderRadius.circular(15),
+                                                    image: DecorationImage(
+                                                      image: AssetImage("assets/icons/placeholder-icon.jpg"),
+                                                      fit: BoxFit.cover,
+                                                    ),
+                                                  ),
+                                                )
+                                              else
+                                                Container(
+                                                  height: 100,
+                                                  width: 100,
+                                                  decoration: BoxDecoration(
+                                                    borderRadius: BorderRadius.circular(15),
+                                                    image: DecorationImage(
+                                                      image: NetworkImage(snapshot.data![index].documentUrl!),
+                                                      fit: BoxFit.cover,
+                                                    ),
                                                   ),
                                                 ),
-                                              )
-                                            else
-                                              Container(
-                                                height: 100,
-                                                width: 100,
-                                                decoration: BoxDecoration(
-                                                  borderRadius: BorderRadius.circular(15),
-                                                  image: DecorationImage(
-                                                    image: NetworkImage(snapshot.data![index].documentUrl!),
-                                                    fit: BoxFit.cover,
-                                                  ),
-                                                ),
-                                              ),
-                                            Text(snapshot.data![index].name!)
-                                          ],
+                                              Text(snapshot.data![index].name!)
+                                            ],
+                                          ),
                                         ),
                                         const SizedBox(width: 10,),
                                       ],
@@ -274,8 +302,8 @@ class _DetailsState extends State<Details> {
                           else {
                             if (snapshot.hasError) {
                               print("error ${snapshot.error}");
-                              return const Center(
-                                child: Text("Something went wrong"),
+                              return  Center(
+                                child: Text("Something went wrong ${snapshot.error}"),
                               );
                             }
                             else if (snapshot.data!.length==0) {
@@ -293,34 +321,40 @@ class _DetailsState extends State<Details> {
                                   itemBuilder: (BuildContext context,int index){
                                     return Row(
                                       children: [
-                                        Column(
-                                          children: [
-                                            if(snapshot.data![index].imageUrl=="")
-                                              Container(
-                                              height: 100,
-                                              width: 100,
-                                              decoration: BoxDecoration(
-                                                borderRadius: BorderRadius.circular(15),
-                                                image: DecorationImage(
-                                                  image: AssetImage("assets/icons/placeholder-icon.jpg"),
-                                                  fit: BoxFit.cover,
-                                                ),
-                                              ),
-                                            )
-                                            else
-                                              Container(
+                                        InkWell(
+                                          onTap: (){
+                                            Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) =>  PhotoViewer(snapshot.data![index].name!,snapshot.data![index].imageUrl!)));
+
+                                          },
+                                          child: Column(
+                                            children: [
+                                              if(snapshot.data![index].imageUrl=="")
+                                                Container(
                                                 height: 100,
                                                 width: 100,
                                                 decoration: BoxDecoration(
                                                   borderRadius: BorderRadius.circular(15),
                                                   image: DecorationImage(
-                                                    image: NetworkImage(snapshot.data![index].imageUrl!),
+                                                    image: AssetImage("assets/icons/placeholder-icon.jpg"),
                                                     fit: BoxFit.cover,
                                                   ),
                                                 ),
-                                              ),
-                                            Text(snapshot.data![index].name!)
-                                          ],
+                                              )
+                                              else
+                                                Container(
+                                                  height: 100,
+                                                  width: 100,
+                                                  decoration: BoxDecoration(
+                                                    borderRadius: BorderRadius.circular(15),
+                                                    image: DecorationImage(
+                                                      image: NetworkImage(snapshot.data![index].imageUrl!),
+                                                      fit: BoxFit.cover,
+                                                    ),
+                                                  ),
+                                                ),
+                                              Text(snapshot.data![index].name!)
+                                            ],
+                                          ),
                                         ),
                                         const SizedBox(width: 10,),
                                       ],

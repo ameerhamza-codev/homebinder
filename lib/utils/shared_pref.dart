@@ -1,5 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+/*
 class SharedPrefHelper{
 
   Future<void> setPrefUserData(String user) async {
@@ -12,4 +13,4 @@ class SharedPrefHelper{
     return prefs.getString("USER_DATA") ?? "no user";
   }
 
-}
+}*/

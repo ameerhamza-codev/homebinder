@@ -142,12 +142,24 @@ class _HomeState extends State<Home> {
                                       flex: 7,
                                       child: Padding(
                                         padding: const EdgeInsets.only(bottom: 15.0),
-                                        child: Container(
+                                        child: snapshot.data![index].imageUrl==""?
+                                        Container(
                                           decoration: BoxDecoration(
                                             border: Border.all(color: colorBlack),
                                             borderRadius: BorderRadius.only(bottomLeft: Radius.circular(15), bottomRight: Radius.circular(15)),
                                             image: DecorationImage(
                                               image: AssetImage("assets/images/placeholder-image.jpeg"),
+                                              fit: BoxFit.cover,
+                                            ),
+                                          ),
+                                        )
+                                        :
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            border: Border.all(color: colorBlack),
+                                            borderRadius: BorderRadius.only(bottomLeft: Radius.circular(15), bottomRight: Radius.circular(15)),
+                                            image: DecorationImage(
+                                              image: NetworkImage(snapshot.data![index].imageUrl!),
                                               fit: BoxFit.cover,
                                             ),
                                           ),

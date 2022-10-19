@@ -2,7 +2,7 @@ class HomeDocumentModel {
   int? id;
   String? name;
   String? category;
-  String? publisher;
+  int? publisher;
   int? homeId;
   String? createdAt;
   String? updatedAt;
@@ -24,7 +24,7 @@ class HomeDocumentModel {
     id = json['id']??0;
     name = json['name']??"";
     category = json['category']??"N/A";
-    publisher = json['publisher']??"";
+    publisher = json['publisher']??0;
     homeId = json['home_id']??0;
     createdAt = json['created_at']??"";
     updatedAt = json['updated_at']??"";

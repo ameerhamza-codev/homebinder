@@ -1,11 +1,15 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:homebinder/utils/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:sn_progress_dialog/progress_dialog.dart';
-
+import 'package:http/http.dart' as http;
+import '../model/aws_class.dart';
 import '../navigator/bottom_navbar.dart';
 import '../provider/UserDataProvider.dart';
 
@@ -28,6 +32,32 @@ class _AddHomeState extends State<AddHome> {
   var _sqrftController=TextEditingController();
   var _acreController=TextEditingController();
   var _dateController=TextEditingController();
+
+  File? file;
+
+  Future awsRequest(AWSClass aws) async{
+    var response = await http.put(
+      Uri.parse(aws.directUpload!.url.toString()),
+      body: file!.readAsBytesSync(),
+      //data:Stream.fromIterable(image.map((e) => [e])),
+      headers: {
+
+        'Content-Type':aws.directUpload!.headers!.contentType.toString(),
+        'Content-MD5':aws.directUpload!.headers!.contentMD5.toString(),
+        'Content-Disposition': aws.directUpload!.headers!.contentDisposition.toString(),
+      },
+
+    );
+    if(response.statusCode==200){
+
+      print("success ${response.body}");
+
+    }
+    else{
+      print("error ${response.body}");
+      print("error ${response.statusCode}");
+    }
+  }
   final _formKey = GlobalKey<FormState>();
   @override
   Widget build(BuildContext context) {
@@ -261,40 +291,119 @@ class _AddHomeState extends State<AddHome> {
                   ),
                 ),
                 const SizedBox(height: 20,),
+                TextField(
+                  onTap: ()async{
+                    FilePickerResult? result = await FilePicker.platform.pickFiles(
+                      type: FileType.image,
+                    );
+                    //chat.setReply(false);
+                    if (result != null) {
+                      file = File(result.files.single.path!);
+                      setState(() {
+
+                      });
+                    };
+                  },
+                  readOnly: true,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15)
+                    ),
+                    hintText: 'Select Image',
+                    hintStyle: TextStyle(color: colorText),
+                    fillColor: colorFill,
+                    filled: true,
+                    suffixIcon: const Icon(
+                        Icons.camera_alt_outlined
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20,),
+                if(file!=null)
+                  Image.file(file!,height: 200,width: MediaQuery.of(context).size.width,fit: BoxFit.cover,),
+                const SizedBox(height: 20,),
                 Center(
                   child: InkWell(
                     onTap: ()async{
                       if(_formKey.currentState!.validate()){
-                        final provider = Provider.of<UserDataProvider>(context, listen: false);
-                        final ProgressDialog pr = ProgressDialog(context: context);
-                        pr.show(max: 100, msg: 'Adding House',barrierDismissible: true);
-                        try {
-                          var dio = Dio();
-                          var response = await dio.post(
-                              options: Options(
-                                 //contentType: Headers.textPlainContentType,
-                                  responseType: ResponseType.plain,
-                                  //headers: {"Accept":"application/html"}
-                              ),
-                              '$apiUrl/home/new',
+                        if(file!=null){
+                          final provider = Provider.of<UserDataProvider>(context, listen: false);
+                          final ProgressDialog pr = ProgressDialog(context: context);
+                          pr.show(max: 100, msg: 'Adding House',barrierDismissible: true);
+                          List<int> imageBytes = await file!.readAsBytesSync();
+                          String checksum = base64Encode(md5.convert(imageBytes).bytes);
+                          try {
+
+                            var dio = Dio();
+                            var response = await dio.post('https://portal.homebinder.io/api/v1/home/new',
                               data: {
-                                'token': provider.userData!.authenticationToken,
+                                'name': _nameController.text,
                                 'address1': _addressController.text,
                                 'address2': "",
                                 'city': _cityController.text,
                                 'state': _stateController.text,
                                 'zip': _zipController.text,
                                 'community_name': _nameController.text,
-                                'lot_number': _lotController.text,
+                                'Lot_number': _lotController.text,
                                 'sqft': _sqrftController.text,
                                 'land_acres': _acreController.text,
                                 'build_date': _dateController.text,
+                                "file":{
+                                  "filename":"${_nameController.text}.jpg",
+                                  "byte_size":file!.lengthSync(),
+                                  "checksum":checksum,
+                                  "content_type":"image/jpeg"
+                                }
 
-                              }
-                          );
-                          print("res ${response}");
-                          if(response.statusCode==201){
-                            pr.close();
+                              },
+                              options: Options(
+                                headers: {
+                                  'Authorization-Email':provider.userData!.email,
+                                  'Authorization':provider.userData!.authenticationToken,
+                                  'Content-Type':'application/json; charset=utf-8',
+                                },
+                              ),
+
+                            );
+                            print("res ${response}");
+                            if(response.statusCode==200){
+
+                              AWSClass model=AWSClass.fromJson(response.data);
+                              /* Iterable l = response.data;
+                                    homes = List<HomeModel>.from(l.map((model)=> HomeModel.fromJson(model)));*/
+                              print("success ${response.data}");
+                              print("data ${model.directUpload!.url}");
+
+                              awsRequest(model).then((value){
+                                pr.close();
+                                showDialog<String>(
+                                  context: context,
+                                  builder: (BuildContext context) => AlertDialog(
+                                    content:  Text('House added successfully', textAlign: TextAlign.center,),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context, 'OK'),
+                                        child: const Text('OK'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).onError((error, stackTrace){
+                                pr.close();
+                                showDialog<String>(
+                                  context: context,
+                                  builder: (BuildContext context) => AlertDialog(
+                                    content:  Text('AWS Request Error', textAlign: TextAlign.center,),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context, 'OK'),
+                                        child: const Text('OK'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              });
+                              /*pr.close();
                             showDialog<String>(
                               context: context,
                               builder: (BuildContext context) => AlertDialog(
@@ -310,50 +419,65 @@ class _AddHomeState extends State<AddHome> {
                                   ),
                                 ],
                               ),
-                            );
-                          }
-                          else{
-                            showDialog<String>(
-                              context: context,
-                              builder: (BuildContext context) => AlertDialog(
-                                content:  Text('Http Error : ${response.statusCode}', textAlign: TextAlign.center,),
-                                actions: <Widget>[
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context, 'OK'),
-                                    child: const Text('OK'),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-
-                        }
-                        on DioError catch (e) {
-                          pr.close();
-
-                          if (e.response != null) {
-                            print("e.response != null");
-                            print(e.response!.data);
-                            print(e.response!.statusCode);
-                            if(e.response!.statusCode==401){
-                              showDialog<String>(
-                                context: context,
-                                builder: (BuildContext context) => AlertDialog(
-                                  content:  Text('User not found', textAlign: TextAlign.center,),
-                                  actions: <Widget>[
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context, 'OK'),
-                                      child: const Text('OK'),
-                                    ),
-                                  ],
-                                ),
-                              );
+                            );*/
                             }
                             else{
                               showDialog<String>(
                                 context: context,
                                 builder: (BuildContext context) => AlertDialog(
-                                  content:  Text('Http Error : ${e.response!.statusCode}', textAlign: TextAlign.center,),
+                                  content:  Text('Http Error ${response.statusCode} ${response.data}', textAlign: TextAlign.center,),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context, 'OK'),
+                                      child: const Text('OK'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+
+                          }
+                          on DioError catch (e) {
+                            pr.close();
+
+                            if (e.response != null) {
+                              print("e.response != null");
+                              print(e.response!.data);
+                              print(e.response!.statusCode);
+                              if(e.response!.statusCode==401){
+                                showDialog<String>(
+                                  context: context,
+                                  builder: (BuildContext context) => AlertDialog(
+                                    content:  Text('User not found', textAlign: TextAlign.center,),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context, 'OK'),
+                                        child: const Text('OK'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                              else{
+                                showDialog<String>(
+                                  context: context,
+                                  builder: (BuildContext context) => AlertDialog(
+                                    content:  Text('DIO Error : ${e.response!.statusCode} ${e.response!.data}', textAlign: TextAlign.center,),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context, 'OK'),
+                                        child: const Text('OK'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                            }
+                            else {
+                              showDialog<String>(
+                                context: context,
+                                builder: (BuildContext context) => AlertDialog(
+                                  content:  Text('Http Request Error ${e.response}', textAlign: TextAlign.center,),
                                   actions: <Widget>[
                                     TextButton(
                                       onPressed: () => Navigator.pop(context, 'OK'),
@@ -364,21 +488,21 @@ class _AddHomeState extends State<AddHome> {
                               );
                             }
                           }
-                          else {
-                            showDialog<String>(
-                              context: context,
-                              builder: (BuildContext context) => AlertDialog(
-                                content:  Text('Http Request Error ${e.response}', textAlign: TextAlign.center,),
-                                actions: <Widget>[
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context, 'OK'),
-                                    child: const Text('OK'),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
                         }
+                        else{
+                        showDialog<String>(
+                          context: context,
+                          builder: (BuildContext context) => AlertDialog(
+                            content:  Text('No document selected', textAlign: TextAlign.center,),
+                            actions: <Widget>[
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, 'OK'),
+                                child: const Text('OK'),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
                       }
 
                     },

@@ -4,7 +4,7 @@ class HomeImageModel {
   String? location;
   int? homeId;
   int? owner;
-  String? publisher;
+  int? publisher;
   String? createdAt;
   String? updatedAt;
   String? imageUrl;
@@ -28,7 +28,7 @@ class HomeImageModel {
     location = json['location']??"";
     homeId = json['home_id']??0;
     owner = json['owner']??0;
-    publisher = json['publisher']??"";
+    publisher = json['publisher']??0;
     createdAt = json['created_at']??"";
     updatedAt = json['updated_at']??"";
     imageUrl = json['image_url']??"";

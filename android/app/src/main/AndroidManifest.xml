@@ -1,8 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.codev.homebinder">
+    package="com.codereno.homebinder">
     <uses-permission android:name="android.permission.INTERNET"/>
    <application
-        android:label="homebinder"
+        android:label="Home Binder"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
