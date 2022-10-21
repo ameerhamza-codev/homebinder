@@ -1,8 +1,10 @@
+import 'package:advance_pdf_viewer/advance_pdf_viewer.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:homebinder/model/document_model.dart';
 import 'package:homebinder/screens/home_documents.dart';
 import 'package:homebinder/screens/home_images.dart';
+import 'package:homebinder/screens/pdf_viewer.dart';
 import 'package:homebinder/screens/photo_viewer.dart';
 import 'package:homebinder/utils/constants.dart';
 import 'package:homebinder/widgets/custom_appbar.dart';
@@ -233,35 +235,23 @@ class _DetailsState extends State<Details> {
                                       children: [
                                         InkWell(
                                           onTap: (){
-                                            Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) =>  PhotoViewer(snapshot.data![index].name!,snapshot.data![index].documentUrl!)));
+
+                                            Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) =>  PdfViewClass(snapshot.data![index].name!,snapshot.data![index].documentUrl!)));
 
                                           },
                                           child: Column(
                                             children: [
-                                              if(snapshot.data![index].documentUrl=="")
-                                                Container(
-                                                  height: 100,
-                                                  width: 100,
-                                                  decoration: BoxDecoration(
-                                                    borderRadius: BorderRadius.circular(15),
-                                                    image: DecorationImage(
-                                                      image: AssetImage("assets/icons/placeholder-icon.jpg"),
-                                                      fit: BoxFit.cover,
-                                                    ),
-                                                  ),
-                                                )
-                                              else
-                                                Container(
-                                                  height: 100,
-                                                  width: 100,
-                                                  decoration: BoxDecoration(
-                                                    borderRadius: BorderRadius.circular(15),
-                                                    image: DecorationImage(
-                                                      image: NetworkImage(snapshot.data![index].documentUrl!),
-                                                      fit: BoxFit.cover,
-                                                    ),
+                                              Container(
+                                                height: 100,
+                                                width: 100,
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(15),
+                                                  image: DecorationImage(
+                                                    image: AssetImage("assets/icons/pdf.png"),
+                                                    fit: BoxFit.cover,
                                                   ),
                                                 ),
+                                              ),
                                               Text(snapshot.data![index].name!)
                                             ],
                                           ),

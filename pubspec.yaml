@@ -45,6 +45,7 @@ dependencies:
   http: ^0.13.5
   timeago: ^3.3.0
   photo_view: ^0.14.0
+  advance_pdf_viewer: any
 
 dev_dependencies:
   flutter_test:

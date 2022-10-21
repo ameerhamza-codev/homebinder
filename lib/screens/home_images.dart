@@ -46,7 +46,6 @@ class _HomeImagesState extends State<HomeImages> {
       setState(() {
         homes = List<HomeImageModel>.from(l.map((model)=> HomeImageModel.fromJson(model)));
         homes.removeWhere((element) => element.homeId!=id);
-
         if(_searchController.text!=""){
           homes.removeWhere((element) => !element.name!.toLowerCase().contains(_searchController.text.toLowerCase().trim()));
         }
@@ -108,8 +107,9 @@ class _HomeImagesState extends State<HomeImages> {
         categories.add(element);
       });
       setState(() {
-        if(categories.isNotEmpty)
+        if(categories.isNotEmpty) {
           selectedCategory=categories.first;
+        }
       });
 
     }

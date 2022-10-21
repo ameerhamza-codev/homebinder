@@ -228,7 +228,8 @@ class _AddDocumentState extends State<AddDocument> {
 
                           FilePickerResult? result = await FilePicker.platform.pickFiles(
                             type: FileType.custom,
-                            allowedExtensions: ['jpg', 'pdf', 'doc','png','jpeg'],
+                            //allowedExtensions: ['jpg', 'pdf','png','jpeg'],
+                            allowedExtensions: ['pdf'],
                           );
                           //chat.setReply(false);
                           if (result != null) {

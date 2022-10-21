@@ -36,7 +36,6 @@ class _HomeDocumentsState extends State<HomeDocuments> {
         },
       ),
     );
-    print("res ${response.statusCode} ${response.data} $apiToken");
     setState(() {
       isItemsLoading=false;
     });
@@ -46,7 +45,6 @@ class _HomeDocumentsState extends State<HomeDocuments> {
       setState(() {
         documents = List<HomeDocumentModel>.from(l.map((model)=> HomeDocumentModel.fromJson(model)));
         documents.removeWhere((element) => element.homeId!=id);
-
         if(_searchController.text!=""){
           documents.removeWhere((element) => !element.name!.toLowerCase().contains(_searchController.text.toLowerCase().trim()));
         }
