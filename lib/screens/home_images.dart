@@ -4,11 +4,13 @@ import 'package:homebinder/model/home_model.dart';
 import 'package:homebinder/model/image_model.dart';
 import 'package:homebinder/screens/add_document.dart';
 import 'package:homebinder/screens/add_image.dart';
+import 'package:homebinder/screens/photo_viewer.dart';
 import 'package:homebinder/utils/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart';
 
 import '../provider/UserDataProvider.dart';
+import '../widgets/curved_appbar.dart';
 
 class HomeImages extends StatefulWidget {
   HomeModel model;
@@ -122,235 +124,212 @@ class _HomeImagesState extends State<HomeImages> {
     final provider = Provider.of<UserDataProvider>(context, listen: false);
 
     return Scaffold(
-      resizeToAvoidBottomInset: false,
-      backgroundColor: colorWhite,
-      appBar: AppBar(
-          backgroundColor: primaryColor,
-          leading: InkWell(
-              onTap: () {
-                Navigator.pop(context);
-              },
-              child: const Padding(
-                padding: EdgeInsets.only(left: 15.0),
-                child: Center(child: Text("Back",style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),)),
-              )
+      body: Column(
+        children: [
+          CurvedAppbar(
+            title: 'IMAGES',
+            subtitle: "${provider.home!.city}, ${provider.home!.state}",
+            onTap: (){
+              Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) =>  AddImage(widget.model)));
+            },
+            isAdd: true,
           ),
-          centerTitle: true,
-          title: Column(
-            children:  [
-              Text("${widget.model.city}, ${widget.model.state}", style: TextStyle(color: colorWhite, fontSize: 24, fontWeight: FontWeight.w500),),
-              Text('IMAGES', style: TextStyle(color: colorWhite, fontSize: 12,),),
-            ],
-          ),
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(
-              bottom: Radius.circular(30),
-            ),
-          ),
-          actions: <Widget>[
-            InkWell(
-              onTap: (){
-                Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) =>  AddImage(widget.model)));
-              },
-              child: Padding(
-                padding: const EdgeInsets.only(right: 15.0),
-                child: Center(child: Text("Add",style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),)),
-              ),
-            ),
-          ]
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: Column(
-            children: [
-              const SizedBox(height: 10,),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    flex: 7,
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (value)async{
-                        getImages(provider.userData!.authenticationToken,provider.userData!.email,provider.home!.id);
-                      },
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(25)
-                        ),
-                        hintText: 'Search',
-                        hintStyle: TextStyle(color: colorText),
-                        fillColor: colorFill,
-                        filled: true,
-
-                      ),
-                    ),
-                  ),
-
-
-                  /*Expanded(
-                    flex: 4,
-                    child: TextField(
-                      decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(25)
-                          ),
-                          hintText: 'Filter',
-                          hintStyle: TextStyle(color: colorText),
-                          fillColor: colorFill,
-                          filled: true,
-                          suffixIcon: Padding(
-                            padding: const EdgeInsets.only(right: 10.0),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                items: <String>['Filter A','Filter B', 'Filter C'].map((String value) {
-                                  return DropdownMenuItem<String>(
-                                    value: value,
-                                    child: Text(value),
-                                  );
-                                }).toList(),
-                                onChanged: (_) {},
-                              ),
-                            ),
-                          )
-                      ),
-                    ),
-
-                  )*/
-                ],
-              ),
-              const SizedBox(height: 20,),
-              Container(
-                child: isLoading?
-                Center(
-                  child: CircularProgressIndicator(),
-                ):
-                TextFormField(
-                  readOnly: true,
-                  controller: _categoryController,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter some text';
-                    }
-                    return null;
-                  },
-                  decoration: InputDecoration(
+          const SizedBox(height: 10,),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  flex: 7,
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value)async{
+                      getImages(provider.userData!.authenticationToken,provider.userData!.email,provider.home!.id);
+                    },
+                    decoration: InputDecoration(
                       border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15)
+                          borderRadius: BorderRadius.circular(25)
                       ),
-                      hintText: 'Category',
-                      hintStyle: TextStyle(color: Colors.grey),
+                      hintText: 'Search',
+                      hintStyle: TextStyle(color: colorText),
                       fillColor: colorFill,
                       filled: true,
-                      suffixIcon: Padding(
-                        padding: const EdgeInsets.only(right: 10.0),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            items: categories.map((String value) {
-                              return DropdownMenuItem<String>(
-                                value: value,
-                                child: Text(value),
-                              );
-                            }).toList(),
-                            onChanged: (String? value) {
-                              // This is called when the user selects an item.
-                              setState(() {
-                                print("valye ${value!}");
-                                _categoryController.text = value;
-                                getImages(provider.userData!.authenticationToken,provider.userData!.email,provider.home!.id);
-                              });
-                            },
-                          ),
-                        ),
-                      )
+
+                    ),
                   ),
+                ),
+
+
+                /*Expanded(
+                      flex: 4,
+                      child: TextField(
+                        decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(25)
+                            ),
+                            hintText: 'Filter',
+                            hintStyle: TextStyle(color: colorText),
+                            fillColor: colorFill,
+                            filled: true,
+                            suffixIcon: Padding(
+                              padding: const EdgeInsets.only(right: 10.0),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  items: <String>['Filter A','Filter B', 'Filter C'].map((String value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    );
+                                  }).toList(),
+                                  onChanged: (_) {},
+                                ),
+                              ),
+                            )
+                        ),
+                      ),
+
+                    )*/
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Container(
+              child: isLoading?
+              Center(
+                child: CircularProgressIndicator(),
+              ):
+              TextFormField(
+                readOnly: true,
+                controller: _categoryController,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter some text';
+                  }
+                  return null;
+                },
+                decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15)
+                    ),
+                    hintText: 'Category',
+                    hintStyle: TextStyle(color: Colors.grey),
+                    fillColor: colorFill,
+                    filled: true,
+                    suffixIcon: Padding(
+                      padding: const EdgeInsets.only(right: 10.0),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          items: categories.map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          onChanged: (String? value) {
+                            // This is called when the user selects an item.
+                            setState(() {
+                              print("valye ${value!}");
+                              _categoryController.text = value;
+                              getImages(provider.userData!.authenticationToken,provider.userData!.email,provider.home!.id);
+                            });
+                          },
+                        ),
+                      ),
+                    )
                 ),
               ),
-              const SizedBox(height: 20,),
-              if (isItemsLoading)
-                Center(
-                  child: CircularProgressIndicator(),
-                )
-              else
-                Expanded(
-                  child: ListView.builder(
-                      itemCount: homes.length,
-                      itemBuilder: (BuildContext context,int index){
-                        return Column(
-                          children: [
-                            Row(
-                              children: [
-                                if(homes[index].imageUrl=="")
-                                  Container(
-                                    height: 150,
-                                    width: 150,
-                                    child: Stack(
-                                      children: [
-                                        Container(
-                                          decoration: BoxDecoration(
-                                              color: colorFill,
-                                              borderRadius: BorderRadius.circular(15)
-                                          ),
-                                        ),
-                                        Positioned(
-                                          bottom: 5,
-                                          right: 5,
-                                          child: Icon(Icons.upload_outlined),
-                                        )
-                                      ],
-                                    ),
-                                  )
-                                else
-                                  Container(
-                                    height: 150,
-                                    width: 150,
-                                    child: Stack(
-                                      children: [
-                                        Container(
-                                          decoration: BoxDecoration(
-                                              image: DecorationImage(
-                                                  image: NetworkImage(homes[index].imageUrl!),
-                                                  fit: BoxFit.contain
-                                              ),
-                                              borderRadius: BorderRadius.circular(15)
-                                          ),
-                                        ),
-                                        Positioned(
-                                          bottom: 5,
-                                          right: 5,
-                                          child: Icon(Icons.upload_outlined),
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                const SizedBox(width: 10,),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(homes[index].name!),
-                                    const SizedBox(height: 3),
-                                    Text(homes[index].category!),
-                                    const SizedBox(height: 3),
-                                    Text(format(DateTime.parse(homes[index].createdAt!))),
-                                    const SizedBox(height: 3),
-                                    Text(homes[index].location!),
-                                  ],
-                                )
-
-                              ],
-                            ),
-                            SizedBox(height: 20,),
-                          ],
-                        );
-                      }
-                  ),
-                ),
-
-
-            ],
+            ),
           ),
-        ),
+          const SizedBox(height: 20,),
+          if (isItemsLoading)
+            Center(
+              child: CircularProgressIndicator(),
+            )
+          else
+            Expanded(
+              child: ListView.builder(
+                  itemCount: homes.length,
+                  itemBuilder: (BuildContext context,int index){
+                    return InkWell(
+                      onTap: (){
+                        Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) =>  PhotoViewer(homes[index].name!,homes[index].imageUrl!)));
+
+                      },
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              if(homes[index].imageUrl=="")
+                                Container(
+                                  height: 150,
+                                  width: 150,
+                                  child: Stack(
+                                    children: [
+                                      Container(
+                                        decoration: BoxDecoration(
+                                            color: colorFill,
+                                            borderRadius: BorderRadius.circular(15)
+                                        ),
+                                      ),
+                                      Positioned(
+                                        bottom: 5,
+                                        right: 5,
+                                        child: Icon(Icons.upload_outlined),
+                                      )
+                                    ],
+                                  ),
+                                )
+                              else
+                                Container(
+                                  height: 150,
+                                  width: 150,
+                                  child: Stack(
+                                    children: [
+                                      Container(
+                                        decoration: BoxDecoration(
+                                            image: DecorationImage(
+                                                image: NetworkImage(homes[index].imageUrl!),
+                                                fit: BoxFit.contain
+                                            ),
+                                            borderRadius: BorderRadius.circular(15)
+                                        ),
+                                      ),
+                                      Positioned(
+                                        bottom: 5,
+                                        right: 5,
+                                        child: Icon(Icons.upload_outlined),
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              const SizedBox(width: 10,),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(homes[index].name!),
+                                  const SizedBox(height: 3),
+                                  Text(homes[index].category!),
+                                  const SizedBox(height: 3),
+                                  Text(format(DateTime.parse(homes[index].createdAt!))),
+                                  const SizedBox(height: 3),
+                                  Text(homes[index].location!),
+                                ],
+                              )
+
+                            ],
+                          ),
+                          SizedBox(height: 20,),
+                        ],
+                      ),
+                    );
+                  }
+              ),
+            ),
+
+
+        ],
       ),
     );
   }

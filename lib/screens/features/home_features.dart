@@ -1,35 +1,32 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:homebinder/screens/add_document.dart';
-import 'package:homebinder/screens/pdf_viewer.dart';
+import 'package:homebinder/model/feature_model.dart';
+import 'package:homebinder/screens/features/add_feature.dart';
+import 'package:homebinder/screens/photo_viewer.dart';
 import 'package:homebinder/utils/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart';
 
-import '../model/document_model.dart';
-import '../provider/UserDataProvider.dart';
-import '../widgets/curved_appbar.dart';
+import '../../provider/UserDataProvider.dart';
+import '../../widgets/curved_appbar.dart';
 
-class HomeDocuments extends StatefulWidget {
-  const HomeDocuments({Key? key}) : super(key: key);
+
+class HomeFeatures extends StatefulWidget {
+
 
   @override
-  State<HomeDocuments> createState() => _HomeDocumentsState();
+  State<HomeFeatures> createState() => _HomeFeaturesState();
 }
 
-class _HomeDocumentsState extends State<HomeDocuments> {
-
-  var _categoryController=TextEditingController();
-  var _searchController=TextEditingController();
-
-  List<HomeDocumentModel> documents=[];
-  getDocuments(apiToken,email,id)async{
+class _HomeFeaturesState extends State<HomeFeatures> {
+  List<HomeFeatureModel> homes=[];
+  getImages(apiToken,email,id)async{
     setState(() {
       isItemsLoading=true;
-      documents.clear();
+      homes.clear();
     });
     var dio = Dio();
-    var response = await  dio.get('$apiUrl/documents',
+    var response = await  dio.get('$apiUrl/features',
       options: Options(
         headers: {
           'Authorization-Email':email,
@@ -38,6 +35,7 @@ class _HomeDocumentsState extends State<HomeDocuments> {
         },
       ),
     );
+    print("res ${response.statusCode} ${response.data} $apiToken");
     setState(() {
       isItemsLoading=false;
     });
@@ -45,21 +43,25 @@ class _HomeDocumentsState extends State<HomeDocuments> {
 
       Iterable l = response.data;
       setState(() {
-        documents = List<HomeDocumentModel>.from(l.map((model)=> HomeDocumentModel.fromJson(model)));
-        documents.removeWhere((element) => element.homeId!=id);
+        homes = List<HomeFeatureModel>.from(l.map((model)=> HomeFeatureModel.fromJson(model)));
+        homes.removeWhere((element) => element.homeId!=id);
         if(_searchController.text!=""){
-          documents.removeWhere((element) => !element.name!.toLowerCase().contains(_searchController.text.toLowerCase().trim()));
+          homes.removeWhere((element) => !element.name!.toLowerCase().contains(_searchController.text.toLowerCase().trim()));
         }
         if(_categoryController.text!=""){
-          documents.removeWhere((element) => element.category!=_categoryController.text);
+          homes.removeWhere((element) => element.category!=_categoryController.text);
         }
 
 
       });
-
     }
 
   }
+
+  var _categoryController=TextEditingController();
+  var _searchController=TextEditingController();
+
+
   @override
   void initState() {
     // TODO: implement initState
@@ -67,7 +69,7 @@ class _HomeDocumentsState extends State<HomeDocuments> {
     WidgetsBinding.instance.addPostFrameCallback((_){
       final provider = Provider.of<UserDataProvider>(context, listen: false);
       getCategories(provider.userData!.authenticationToken, provider.userData!.email);
-      getDocuments(provider.userData!.authenticationToken,provider.userData!.email,provider.home!.id);
+      getImages(provider.userData!.authenticationToken,provider.userData!.email,provider.home!.id);
     });
   }
 
@@ -82,7 +84,7 @@ class _HomeDocumentsState extends State<HomeDocuments> {
     print("token $apiToken : email $email");
     //List<HomeModel> homes=[];
     var dio = Dio();
-    var response = await  dio.get('$apiUrl/documents/categories',
+    var response = await  dio.get('$apiUrl/features/categories',
       options: Options(
         headers: {
           'Authorization-Email':email,
@@ -104,8 +106,9 @@ class _HomeDocumentsState extends State<HomeDocuments> {
         categories.add(element);
       });
       setState(() {
-        if(categories.isNotEmpty)
+        if(categories.isNotEmpty) {
           selectedCategory=categories.first;
+        }
       });
 
     }
@@ -113,20 +116,18 @@ class _HomeDocumentsState extends State<HomeDocuments> {
     return response.data;
 
   }
-
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<UserDataProvider>(context, listen: false);
 
     return Scaffold(
-
       body: Column(
         children: [
           CurvedAppbar(
-            title: 'DOCUMENTS',
+            title: 'FEATURES',
             subtitle: "${provider.home!.city}, ${provider.home!.state}",
             onTap: (){
-              Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) =>  AddDocument()));
+              Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) =>  AddFeature()));
             },
             isAdd: true,
           ),
@@ -141,7 +142,7 @@ class _HomeDocumentsState extends State<HomeDocuments> {
                   child: TextField(
                     controller: _searchController,
                     onChanged: (value)async{
-                      getDocuments(provider.userData!.authenticationToken,provider.userData!.email,provider.home!.id);
+                      getImages(provider.userData!.authenticationToken,provider.userData!.email,provider.home!.id);
                     },
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
@@ -228,7 +229,7 @@ class _HomeDocumentsState extends State<HomeDocuments> {
                             setState(() {
                               print("valye ${value!}");
                               _categoryController.text = value;
-                              getDocuments(provider.userData!.authenticationToken,provider.userData!.email,provider.home!.id);
+                              getImages(provider.userData!.authenticationToken,provider.userData!.email,provider.home!.id);
                             });
                           },
                         ),
@@ -246,50 +247,76 @@ class _HomeDocumentsState extends State<HomeDocuments> {
           else
             Expanded(
               child: ListView.builder(
-                  itemCount: documents.length,
+                  itemCount: homes.length,
                   itemBuilder: (BuildContext context,int index){
                     return InkWell(
                       onTap: (){
-                        Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) =>  PdfViewClass(documents[index].name!,documents[index].documentUrl!)));
+                        Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) =>  PhotoViewer(homes[index].name!,homes[index].imageUrl!)));
+
                       },
                       child: Column(
                         children: [
                           Row(
                             children: [
-
-                              Container(
-                                height: 150,
-                                width: 150,
-                                child: Stack(
-                                  children: [
-                                    Container(
-                                      decoration: BoxDecoration(
-                                          image: DecorationImage(
-                                              image: AssetImage('assets/icons/pdf.png'),
-                                              fit: BoxFit.contain
-                                          ),
-                                          borderRadius: BorderRadius.circular(15)
+                              if(homes[index].imageUrl=="")
+                                Container(
+                                  height: 150,
+                                  width: 150,
+                                  child: Stack(
+                                    children: [
+                                      Container(
+                                        decoration: BoxDecoration(
+                                            color: colorFill,
+                                            borderRadius: BorderRadius.circular(15)
+                                        ),
                                       ),
-                                    ),
-                                    Positioned(
-                                      bottom: 5,
-                                      right: 15,
-                                      child: Icon(Icons.upload_outlined),
-                                    )
+                                      Positioned(
+                                        bottom: 5,
+                                        right: 5,
+                                        child: Icon(Icons.upload_outlined),
+                                      )
+                                    ],
+                                  ),
+                                )
+                              else
+                                Container(
+                                  height: 150,
+                                  width: 150,
+                                  child: Stack(
+                                    children: [
+                                      Container(
+                                        decoration: BoxDecoration(
+                                            image: DecorationImage(
+                                                image: NetworkImage(homes[index].imageUrl!),
+                                                fit: BoxFit.contain
+                                            ),
+                                            borderRadius: BorderRadius.circular(15)
+                                        ),
+                                      ),
+                                      Positioned(
+                                        bottom: 5,
+                                        right: 5,
+                                        child: Icon(Icons.upload_outlined),
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              const SizedBox(width: 10,),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(homes[index].name!),
+                                    const SizedBox(height: 3),
+                                    Text(homes[index].brand!),
+                                    const SizedBox(height: 3),
+                                    Text(homes[index].model!),
+                                    const SizedBox(height: 3),
+                                    // Text(format(DateTime.parse(homes[index].warrantyEndDate!))),
+                                    // const SizedBox(height: 3),
+                                    Text(homes[index].category!),
                                   ],
                                 ),
-                              ),
-                              const SizedBox(width: 10,),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(documents[index].name!),
-                                  const SizedBox(height: 3),
-                                  Text(documents[index].category!),
-                                  const SizedBox(height: 3),
-                                  Text(format(DateTime.parse(documents[index].createdAt!))),
-                                  const SizedBox(height: 3),
-                                ],
                               )
 
                             ],
@@ -301,6 +328,7 @@ class _HomeDocumentsState extends State<HomeDocuments> {
                   }
               ),
             ),
+
 
         ],
       ),

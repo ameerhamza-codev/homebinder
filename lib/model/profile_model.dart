@@ -2,6 +2,7 @@ class ProfileModel {
   String? email;
   String? lastSignInAt;
   String? lastname;
+  String? firstname;
   String? role;
   String? avatarUrl;
 
@@ -9,6 +10,7 @@ class ProfileModel {
       {this.email,
         this.lastSignInAt,
         this.lastname,
+        this.firstname,
         this.role,
         this.avatarUrl});
 
@@ -16,6 +18,7 @@ class ProfileModel {
     email = json['email']??"";
     lastSignInAt = json['last_sign_in_at']??"";
     lastname = json['lastname']??"";
+    firstname = json['firstname']??"";
     role = json['role']??"";
     avatarUrl = json['avatar_url']??"";
   }
@@ -25,6 +28,7 @@ class ProfileModel {
     data['email'] = this.email;
     data['last_sign_in_at'] = this.lastSignInAt;
     data['lastname'] = this.lastname;
+    data['firstname'] = this.firstname;
     data['role'] = this.role;
     data['avatar_url'] = this.avatarUrl;
     return data;

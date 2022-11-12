@@ -106,7 +106,7 @@ class _ProfileState extends State<Profile> {
                         children: [
                           Container(
                             width: width,
-                            height: height*0.2,
+                            height: height*0.18,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.only(bottomRight: Radius.circular(25), bottomLeft: Radius.circular(25)),
                               color: primaryColor,
@@ -156,7 +156,7 @@ class _ProfileState extends State<Profile> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("Name: ${snapshot.data!.lastname}",style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),),
+                            Text("First Name: ${snapshot.data!.lastname}",style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),),
                             const Divider(height: 1,)
                           ],
                         ),

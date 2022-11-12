@@ -1,38 +1,51 @@
 import 'dart:convert';
 import 'dart:io';
-
+import 'package:http/http.dart' as http;
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:homebinder/model/aws_class.dart';
 import 'package:homebinder/utils/constants.dart';
-import 'package:homebinder/widgets/curved_appbar.dart';
 import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
 import 'package:sn_progress_dialog/progress_dialog.dart';
-import '../model/aws_class.dart';
-import '../provider/UserDataProvider.dart';
-import 'home_detail.dart';
 
-class AddDocument extends StatefulWidget {
+import '../../provider/UserDataProvider.dart';
+import '../../widgets/curved_appbar.dart';
+import '../home_detail.dart';
 
+class AddFeature extends StatefulWidget {
 
 
   @override
-  State<AddDocument> createState() => _AddDocumentState();
+  State<AddFeature> createState() => _AddFeatureState();
 }
 
-class _AddDocumentState extends State<AddDocument> {
+class _AddFeatureState extends State<AddFeature> {
   File? file;
   var _nameController=TextEditingController();
+  var _brandController=TextEditingController();
+  var _modelController=TextEditingController();
+  var _colorController=TextEditingController();
+  var _serialController=TextEditingController();
+  var _skuController=TextEditingController();
+  var _warrantyStartController=TextEditingController();
+  var _warrantyEndController=TextEditingController();
+  var _warrantyTypeController=TextEditingController();
+  var _manufacturerPhoneController=TextEditingController();
+  var _manufacturerWebsiteController=TextEditingController();
+  var _manufacturerSupportController=TextEditingController();
+  var _manufacturerEmailController=TextEditingController();
   var _categoryController=TextEditingController();
-  var _mediaController=TextEditingController();
+  late int selectedIndex;  //where I want to store the selected index
+  late String initialDropDownVal;
+  List<Map<int,DropdownMenuItem<String>>> dropdownItems = [];
 
-
-
-  bool isLoading=false;
   String selectedCategory="";
   List<String> categories=[];
+  bool isLoading=false;
+
   getCategories(apiToken,email)async{
     setState(() {
       isLoading=true;
@@ -40,7 +53,7 @@ class _AddDocumentState extends State<AddDocument> {
     print("token $apiToken : email $email");
     //List<HomeModel> homes=[];
     var dio = Dio();
-    var response = await  dio.get('$apiUrl/documents/categories',
+    var response = await  dio.get('$apiUrl/features/categories',
       options: Options(
         headers: {
           'Authorization-Email':email,
@@ -74,16 +87,17 @@ class _AddDocumentState extends State<AddDocument> {
   final _formKey = GlobalKey<FormState>();
 
   Future awsRequest(AWSClass aws) async{
+    Uint8List image = file!.readAsBytesSync();
     var response = await http.put(
       Uri.parse(aws.directUpload!.url.toString()),
       body: file!.readAsBytesSync(),
       //data:Stream.fromIterable(image.map((e) => [e])),
       headers: {
 
-        'Content-Type':aws.directUpload!.headers!.contentType.toString(),
-        'Content-MD5':aws.directUpload!.headers!.contentMD5.toString(),
-        'Content-Disposition': aws.directUpload!.headers!.contentDisposition.toString(),
-      },
+    'Content-Type':aws.directUpload!.headers!.contentType.toString(),
+    'Content-MD5':aws.directUpload!.headers!.contentMD5.toString(),
+    'Content-Disposition': aws.directUpload!.headers!.contentDisposition.toString(),
+    },
 
     );
     if(response.statusCode==200){
@@ -107,49 +121,23 @@ class _AddDocumentState extends State<AddDocument> {
       getCategories(provider.userData!.authenticationToken, provider.userData!.email);
     });
   }
+
+
   @override
   Widget build(BuildContext context) {
 
     double width = MediaQuery.of(context).size.width;
-    double height = MediaQuery.of(context).size.height;
-
-    bool checkedValue = false;
-    String ext='';
     final provider = Provider.of<UserDataProvider>(context, listen: false);
 
+
     return Scaffold(
-     /* appBar: AppBar(
-        backgroundColor: primaryColor,
-        leading: InkWell(
-          onTap: () {
-            Navigator.pop(context);
-          },
-          child: const Padding(
-            padding: EdgeInsets.only(left: 15.0),
-            child: Center(child: Text("Back",style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),)),
-          )
-        ),
-        centerTitle: true,
-        title: Column(
-          children: [
-            Text("${provider.home!.city}, ${provider.home!.state}", style: TextStyle(color: colorWhite, fontSize: 24, fontWeight: FontWeight.w500),),
-            Text('ADD DOCUMENTS', style: TextStyle(color: colorWhite, fontSize: 12,),),
-          ],
-        ),
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(30),
-          ),
-        ),
-        actions: <Widget>[
-        ]
-      ),*/
       body: Form(
         key: _formKey,
-        child: Column(
+        child: ListView(
+          padding: EdgeInsets.zero,
           children: [
             CurvedAppbar(
-                title: 'ADD DOCUMENTS',
+              title: 'ADD FEATURE',
               subtitle: "${provider.home!.city}, ${provider.home!.state}",
               onTap: (){
 
@@ -164,6 +152,7 @@ class _AddDocumentState extends State<AddDocument> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 50,),
+
                     TextFormField(
                       controller: _nameController,
                       validator: (value) {
@@ -185,13 +174,304 @@ class _AddDocumentState extends State<AddDocument> {
                       ),
                     ),
                     const SizedBox(height: 10,),
+
+                    TextFormField(
+                      controller: _brandController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter some text';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15)
+                        ),
+                        hintText: 'Brand',
+
+                        hintStyle: TextStyle(color: colorText),
+                        fillColor: colorFill,
+                        filled: true,
+
+                      ),
+                    ),
+                    const SizedBox(height: 10,),
+
+                    TextFormField(
+                      controller: _modelController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter some text';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15)
+                        ),
+                        hintText: 'Model',
+
+                        hintStyle: TextStyle(color: colorText),
+                        fillColor: colorFill,
+                        filled: true,
+
+                      ),
+                    ),
+                    const SizedBox(height: 10,),
+
+                    TextFormField(
+                      controller: _colorController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter some text';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15)
+                        ),
+                        hintText: 'Color',
+
+                        hintStyle: TextStyle(color: colorText),
+                        fillColor: colorFill,
+                        filled: true,
+
+                      ),
+                    ),
+                    const SizedBox(height: 10,),
+
+                    TextFormField(
+                      controller: _serialController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter some text';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15)
+                        ),
+                        hintText: 'Serial Number',
+
+                        hintStyle: TextStyle(color: colorText),
+                        fillColor: colorFill,
+                        filled: true,
+
+                      ),
+                    ),
+                    const SizedBox(height: 10,),
+
+                    TextFormField(
+                      controller: _skuController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter some text';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15)
+                        ),
+                        hintText: 'SKU',
+
+                        hintStyle: TextStyle(color: colorText),
+                        fillColor: colorFill,
+                        filled: true,
+
+                      ),
+                    ),
+                    const SizedBox(height: 10,),
+
+                    TextFormField(
+                      readOnly: true,
+                      onTap: ()async{
+                        final DateTime? picked = await showDatePicker(
+                            context: context,
+                            initialDate: DateTime.now(),
+                            firstDate: DateTime(1980, 8),
+                            lastDate: DateTime(2101));
+                        if (picked != null) {
+                          setState(() {
+                            _warrantyStartController.text = f.format(picked);
+                          });
+                        }
+                      },
+                      controller: _warrantyStartController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter some text';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15)
+                        ),
+                        hintText: 'Warranty Start Date',
+
+                        hintStyle: TextStyle(color: colorText),
+                        fillColor: colorFill,
+                        filled: true,
+
+                      ),
+                    ),
+                    const SizedBox(height: 10,),
+
+                    TextFormField(
+                      controller: _warrantyEndController,
+                      readOnly: true,
+                      onTap: ()async{
+                        final DateTime? picked = await showDatePicker(
+                            context: context,
+                            initialDate: DateTime.now(),
+                            firstDate: DateTime(1980, 8),
+                            lastDate: DateTime(2101));
+                        if (picked != null) {
+                          setState(() {
+                            _warrantyEndController.text = f.format(picked);
+                          });
+                        }
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter some text';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15)
+                        ),
+                        hintText: 'Warranty End Date',
+
+                        hintStyle: TextStyle(color: colorText),
+                        fillColor: colorFill,
+                        filled: true,
+
+                      ),
+                    ),
+                    const SizedBox(height: 10,),
+
+                    TextFormField(
+                      controller: _warrantyTypeController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter some text';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15)
+                        ),
+                        hintText: 'Warranty Type',
+
+                        hintStyle: TextStyle(color: colorText),
+                        fillColor: colorFill,
+                        filled: true,
+
+                      ),
+                    ),
+                    const SizedBox(height: 10,),
+
+                    TextFormField(
+                      controller: _manufacturerEmailController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter some text';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15)
+                        ),
+                        hintText: 'Manufacturer Email',
+
+                        hintStyle: TextStyle(color: colorText),
+                        fillColor: colorFill,
+                        filled: true,
+
+                      ),
+                    ),
+                    const SizedBox(height: 10,),
+
+                    TextFormField(
+                      controller: _manufacturerPhoneController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter some text';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15)
+                        ),
+                        hintText: 'Manufacturer Phone',
+
+                        hintStyle: TextStyle(color: colorText),
+                        fillColor: colorFill,
+                        filled: true,
+
+                      ),
+                    ),
+                    const SizedBox(height: 10,),
+
+                    TextFormField(
+                      controller: _manufacturerWebsiteController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter some text';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15)
+                        ),
+                        hintText: 'Manufacturer Website',
+
+                        hintStyle: TextStyle(color: colorText),
+                        fillColor: colorFill,
+                        filled: true,
+
+                      ),
+                    ),
+                    const SizedBox(height: 10,),
+
+                    TextFormField(
+                      controller: _manufacturerSupportController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter some text';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15)
+                        ),
+                        hintText: 'Manufacturer Support',
+
+                        hintStyle: TextStyle(color: colorText),
+                        fillColor: colorFill,
+                        filled: true,
+
+                      ),
+                    ),
+                    const SizedBox(height: 10,),
+
+
                     if(isLoading)
                       Center(
                         child: CircularProgressIndicator(),
                       )
                     else
                       TextFormField(
-                        readOnly: true,
                         controller: _categoryController,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -231,33 +511,23 @@ class _AddDocumentState extends State<AddDocument> {
                     const SizedBox(height: 10,),
                     TextField(
                       onTap: ()async{
-
                         FilePickerResult? result = await FilePicker.platform.pickFiles(
-                          type: FileType.custom,
-                          //allowedExtensions: ['jpg', 'pdf','png','jpeg'],
-                          allowedExtensions: ['pdf'],
+                          type: FileType.image,
                         );
                         //chat.setReply(false);
                         if (result != null) {
-
                           file = File(result.files.single.path!);
-                          ext=result.files.single.extension!;
-                          print("file ext:$ext");
-                          _mediaController.text=result.files.single.name;
-                          print('${file!=null} && (${ext=='pdf' || ext=='doc'})');
-                          print('${file!=null && (ext!='doc' && ext!='pdf')}');
                           setState(() {
 
                           });
                         };
                       },
                       readOnly: true,
-                      controller: _mediaController,
                       decoration: InputDecoration(
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(15)
                         ),
-                        hintText: 'Select Document',
+                        hintText: 'Select Feature',
                         hintStyle: TextStyle(color: colorText),
                         fillColor: colorFill,
                         filled: true,
@@ -266,17 +536,9 @@ class _AddDocumentState extends State<AddDocument> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 20,),
-                    /* if(file!=null)
-                        (ext=='pdf' || ext=='doc')?
-                        Center(
-                          child: Text("Document : ${file!.path}"),
-                        ):
-                        Image.file(file!,height: 200,width: MediaQuery.of(context).size.width,fit: BoxFit.cover,),*/
-                    /*if(file!=null && ext=='pdf')
-                      ,
-                      if(file!=null && ext!='pdf')*/
+                    if(file!=null)
+                      Image.file(file!,height: 200,width: MediaQuery.of(context).size.width,fit: BoxFit.cover,),
                     const SizedBox(height: 20,),
                     Center(
                       child: InkWell(
@@ -292,17 +554,29 @@ class _AddDocumentState extends State<AddDocument> {
                                 String checksum = base64Encode(md5.convert(imageBytes).bytes);
 
                                 var dio = Dio();
-                                var response = await  dio.post('$apiUrl//document/new',
+                                print('id ${provider.home!.id}');
+                                var response = await  dio.post('$apiUrl/feature/new',
                                   data:{
                                     'name':_nameController.text,
+                                    'brand':_brandController.text,
+                                    'model':_modelController.text,
+                                    'color':_colorController.text,
+                                    'serial_number':_serialController.text,
+                                    'sku':_skuController.text,
+                                    'warranty_start_date':_warrantyStartController.text,
+                                    'warranty_end_date':_warrantyEndController.text,
+                                    //'warranty_type':_warrantyTypeController.text,
+                                    'manufacturer_phone':_manufacturerPhoneController.text,
+                                    'manufacturer_website':_manufacturerWebsiteController.text,
+                                    'manufacturer_support':_manufacturerSupportController.text,
+                                    'manufacturer_email':_manufacturerEmailController.text,
                                     'home_id':provider.home!.id,
-                                    'category':selectedCategory,
-                                    'location':provider.home!.city,
                                     "file":{
-                                      "filename":"${_nameController.text}.pdf",
+                                      "filename":"${_nameController.text}.jpg",
                                       "byte_size":file!.lengthSync(),
                                       "checksum":checksum,
-                                      "content_type":"document/pdf"
+                                      "content_type":"image/jpeg",
+                                      "metadata":{"folder":"/tmp","expiration_time":"600"}
                                     }
                                   },
                                   options: Options(
@@ -316,7 +590,7 @@ class _AddDocumentState extends State<AddDocument> {
                                 if(response.statusCode==200){
                                   AWSClass model=AWSClass.fromJson(response.data);
                                   /* Iterable l = response.data;
-                                    homes = List<HomeModel>.from(l.map((model)=> HomeModel.fromJson(model)));*/
+                                  homes = List<HomeModel>.from(l.map((model)=> HomeModel.fromJson(model)));*/
                                   print("success ${response.data}");
                                   print("data ${model.directUpload!.url}");
 
@@ -325,7 +599,7 @@ class _AddDocumentState extends State<AddDocument> {
                                     showDialog<String>(
                                       context: context,
                                       builder: (BuildContext context) => AlertDialog(
-                                        content:  Text('Document added successfully', textAlign: TextAlign.center,),
+                                        content:  Text('Feature added successfully', textAlign: TextAlign.center,),
                                         actions: <Widget>[
                                           TextButton(
                                             onPressed: () => Navigator.of(context).pushAndRemoveUntil(
@@ -361,10 +635,11 @@ class _AddDocumentState extends State<AddDocument> {
                                 }
                                 else{
                                   pr.close();
+                                  print('Http Error ${response.statusCode} ${response.data}');
                                   showDialog<String>(
                                     context: context,
                                     builder: (BuildContext context) => AlertDialog(
-                                      content:  Text('Http Error ${response.statusCode}', textAlign: TextAlign.center,),
+                                      content:  Text('Http Error ${response.statusCode}${response.data} ', textAlign: TextAlign.center,),
                                       actions: <Widget>[
                                         TextButton(
                                           onPressed: () => Navigator.pop(context, 'OK'),
@@ -433,7 +708,7 @@ class _AddDocumentState extends State<AddDocument> {
                               showDialog<String>(
                                 context: context,
                                 builder: (BuildContext context) => AlertDialog(
-                                  content:  Text('No document selected', textAlign: TextAlign.center,),
+                                  content:  Text('No image selected', textAlign: TextAlign.center,),
                                   actions: <Widget>[
                                     TextButton(
                                       onPressed: () => Navigator.pop(context, 'OK'),
@@ -454,7 +729,7 @@ class _AddDocumentState extends State<AddDocument> {
                               color: secondaryColor
                           ),
                           alignment: Alignment.center,
-                          child: const Text("Add Document",style: TextStyle(fontSize:16,color: colorWhite, fontWeight: FontWeight.w600),),
+                          child: const Text("Upload Image",style: TextStyle(fontSize:16,color: colorWhite, fontWeight: FontWeight.w600),),
                         ),
                       ),
                     ),
